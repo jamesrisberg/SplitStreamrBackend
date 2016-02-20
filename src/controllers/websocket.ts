@@ -22,7 +22,7 @@ interface IMessage {
     songID?: string
 }
 
-export class WebSocketHandler {
+class WebSocketHandler {
     private sessions: { [key:string]: ISession };
     private connections: { [key:string]: IConnection };
 
@@ -157,11 +157,11 @@ export class WebSocketHandler {
         }
     }
 
-    streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {
-        
-    }
+    streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {}
 
     handleError(ws: ws, clientID: string, e: string) {
         ws.send(JSON.stringify({message: 'error', error: e}));
     }
 }
+
+export = WebSocketHandler;
