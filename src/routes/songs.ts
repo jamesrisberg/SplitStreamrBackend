@@ -11,7 +11,20 @@ export function getSongs(req: express.Request, res: express.Response) {
                 res.status(400);
                 res.jsonp(err);
             } else {
-                res.jsonp(songs)
+                res.jsonp(songs);
+            }
+        });
+}
+
+export function songByID(req: express.Request, res: express.Response) {
+    Song
+        .findOne({})
+        .exec(function(err, song) {
+            if (err) {
+                res.status(400);
+                res.jsonp(err);
+            } else {
+                res.jsonp(song);
             }
         });
 }

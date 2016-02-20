@@ -63,7 +63,7 @@ class WebSocketHandler {
     }
 
     handleNewMessage(ws: ws, clientID: string, messageObj: IMessage) {
-        console.log(clientID, 'sent a message:', messageObj.message, '.');
+        console.log(clientID, 'sent a message:', messageObj.message + '.');
 
        switch(messageObj.message) {
        case 'new session':
@@ -78,7 +78,7 @@ class WebSocketHandler {
        default:
            this.handleError(ws, clientID, 'Message not supported');
 
-           console.log(clientID, 'message "', messageObj.message, '" is unsupported.');
+           console.log(clientID, 'message "' + messageObj.message + '" is unsupported.');
        }
     }
 

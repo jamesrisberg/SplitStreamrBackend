@@ -13,7 +13,12 @@ var server: http.Server = http.createServer(app);
 var wss: ws.Server = new WebSocketServer({server: server});
 var WebSocketHander = new WebSocketHandler(wss);
 
+mongoose.connect('mongodb://localhost/splitstreamr-test');
+
 app.route('/songs')
     .get(songRoutes.getSongs);
+
+app.route('/songs/:songID')
+    .get(songRoutes.songByID);
 
 server.listen(8080);
