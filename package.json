@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "express": "^4.13.4",
+    "musicmetadata": "^2.0.2",
     "ws": "^1.0.1"
   }
 }

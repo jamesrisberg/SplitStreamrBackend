@@ -8,7 +8,10 @@ import songRoutes = require('./routes/songs');
 
 var WebSocketServer = ws.Server;
 var app = express();
-var server = http.createServer(app);
-var wss = new WebSocketServer({server: server});
+var server: http.Server = http.createServer(app);
+var wss: ws.Server = new WebSocketServer({server: server});
+
+app.route('/songs')
+    .get(songRoutes.getSongs);
 
 server.listen(8080);

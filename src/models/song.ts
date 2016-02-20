@@ -12,3 +12,5 @@ var SongSchema = new Schema({
     fixedChunkSize: Number, // Size in bytes
     fileType: String // File extension, eg 'mp3'
 });
+
+export = mongoose.model<ISong>('Song', SongSchema);
