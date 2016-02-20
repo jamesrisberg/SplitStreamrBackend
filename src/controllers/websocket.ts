@@ -23,6 +23,7 @@ export class WebSocketHandler {
 
             ws.on('message', (data: string) => {
                 try {
+                    // Parse and handle incoming message.
                     var messageObj = JSON.parse(data);
                     this.handleNewMessage(ws, clientID, messageObj);
                 } catch (ex) {
