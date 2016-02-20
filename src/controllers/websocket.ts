@@ -104,6 +104,8 @@ export class WebSocketHandler {
     }
 
     newSession(ws: ws, clientID: string) {
+        console.log(clientID, 'requested a new session.');
+
         var existingSessionID: string = this.connections[clientID].session;
         var sessionID: string = shortid.generate();
 
@@ -128,15 +130,23 @@ export class WebSocketHandler {
 
         this.connections[clientID].session = sessionID;
         ws.send(JSON.stringify({ message: 'new session', session: sessionID}));
+
+        console.log(clientID, 'created a new session:', sessionID, '.');
     }
 
     joinSession(ws: ws, clientID: string, sessionID: string) {
+        console.log(clientID, 'requested to join session:', sessionID, '.');
+
         if (this.sessions[sessionID]) {
             this.sessions[sessionID].members.push(clientID);
             this.connections[clientID].session = sessionID;
             ws.send(JSON.stringify({ message: 'join session', session: sessionID}));
+
+            console.log(clientID, 'joined session:', sessionID, '.');
         } else {
-            this.handleError(ws, clientID, 'Session does not exist')
+            this.handleError(ws, clientID, 'Session does not exist');
+
+            console.log(clientID, 'failed to join session:', sessionID, '.');
         }
     }
 
