@@ -15,5 +15,17 @@
   "bugs": {
     "url": "https://github.com/SplitStreamr/SplitStreamrBackend/issues"
   },
-  "homepage": "https://github.com/SplitStreamr/SplitStreamrBackend#readme"
+  "homepage": "https://github.com/SplitStreamr/SplitStreamrBackend#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-nodemon": "^2.0.6",
+    "gulp-typescript": "^2.11.0",
+    "nodemon": "^1.9.0",
+    "typescript": "^1.7.5",
+    "typings": "^0.6.8"
+  },
+  "dependencies": {
+    "express": "^4.13.4",
+    "ws": "^1.0.1"
+  }
 }
