@@ -2,12 +2,11 @@
 
 import fs = require('fs');
 import q = require('q');
-import path
 import Song = require('../models/song');
 import ISong = require('../interfaces/song');
 var mm = require('musicmetadata');
 
-export function getMusicFileMetadata(filename: String) {
+export function getMusicFileMetadata(filename: string) {
     var defer = q.defer();
 
     mm(fs.createReadStream(filename),

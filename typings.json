@@ -3,11 +3,13 @@
   "dependencies": {},
   "devDependencies": {},
   "ambientDependencies": {
+    "Q": "github:DefinitelyTyped/DefinitelyTyped/q/Q.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
     "express": "github:DefinitelyTyped/DefinitelyTyped/express/express.d.ts#dd638012d63e069f2c99d06ef4dcc9616a943ee4",
     "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#cb5206a8ac1c9a3ddfd126f5ecea6729b2361452",
     "mongoose": "github:DefinitelyTyped/DefinitelyTyped/mongoose/mongoose.d.ts#cebde64b3a1d63d07ee7c7dbc49b631ce220d027",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#263705d313346e093d95cb62cef6fed848e46978",
     "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#0fa4e9e61385646ea6a4cba2aef357353d2ce77f",
+    "shortid": "github:DefinitelyTyped/DefinitelyTyped/shortid/shortid.d.ts#f1e34355814e30f94e0b80680a6c6863e0b07c32",
     "ws": "github:DefinitelyTyped/DefinitelyTyped/ws/ws.d.ts#ea10ebfa5775e7f85cd6947094dca185d7b3d33e"
   }
 }

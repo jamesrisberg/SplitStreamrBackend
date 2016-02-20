@@ -10,3 +10,5 @@ interface ISong extends mongoose.Document {
     fixedChunkSize: Number; // Size in bytes
     fileType: String; // File extension, eg 'mp3'
 }
+
+export = ISong;
