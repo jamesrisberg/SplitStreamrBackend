@@ -24,7 +24,7 @@ interface ISession {
 interface IMessage {
     message: string,
     session?: string,
-    songID?: string
+    song?: string
 }
 
 class WebSocketHandler {
@@ -78,7 +78,7 @@ class WebSocketHandler {
             this.joinSession(ws, clientID, messageObj.session);
             break;
         case 'stream song':
-            this.streamSong(ws, clientID, messageObj.session, messageObj.songID);
+            this.streamSong(ws, clientID, messageObj.session, messageObj.song);
             break;
         case 'chunk received':
             this.sendChunk(ws, clientID, messageObj.session);
