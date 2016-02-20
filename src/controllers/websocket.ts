@@ -2,9 +2,11 @@
 
 import ws = require('ws');
 import shortid = require('shortid');
+import _ = require('lodash');
 
 export class WebSocketHandler {
     private sessions;
+    private connections;
 
     constructor(private wss: ws.Server) {
         this.setupServer();
@@ -13,24 +15,55 @@ export class WebSocketHandler {
     setupServer() {
         this.wss.on('connection', ws => {
             var clientID = shortid.generate();
+
+            this.connections[clientID] = {
+                ws: ws,
+                session: undefined
+            }
+
             ws.on('message', (data: string) => {
                 try {
-                    var obj = JSON.parse(data);
-                    switch(obj.message) {
-                    case 'New Session':
-                        this.newSession(ws, clientID);
-                        break;
-                    case 'Join Session':
-                        this.joinSession(ws, clientID, obj.session);
-                        break;
-                    case 'Stream Song':
-                        this.streamSong(ws, clientID, obj.session, obj.filename);
-                    }
+                    var messageObj = JSON.parse(data);
+                    this.handleNewMessage(ws, clientID, messageObj);
                 } catch (ex) {
                     this.handleError(ws, clientID, ex);
                 }
             });
+
+            ws.on('close', () => {
+                // Cleanup sessions and connections
+                this.removeFromSession(clientID);
+                delete this.connections[clientID];
+            });
         });
+    }
+
+    handleNewMessage(ws: ws, clientID: string, messageObj) {
+       switch(messageObj.message) {
+       case 'new session':
+           this.newSession(ws, clientID);
+           break;
+       case 'join session':
+           this.joinSession(ws, clientID, messageObj.session);
+           break;
+       case 'stream Song':
+           this.streamSong(ws, clientID, messageObj.session, messageObj.filename);
+           break;
+       default:
+           this.handleError(ws, clientID, 'Message not supported');
+       }
+    }
+
+    removeFromSession(clientID: string) {
+        var sessionID = this.connections[clientID].session;
+        if (sessionID) {
+            var sessionMembers = this.sessions[sessionID].members
+            sessionMembers = _.pull(sessionMembers, clientID);
+            // Clean up stale sessions
+            if (sessionMembers.length == 0) {
+                delete this.sessions[sessionID];
+            }
+        }
     }
 
     newSession(ws: ws, clientID: string) {
@@ -40,20 +73,19 @@ export class WebSocketHandler {
             song: '',
             currentChunk: 0
         };
-        ws.send(JSON.stringify({ message: 'new session', session: 'session'}));
+        ws.send(JSON.stringify({ message: 'new session', session: session}));
     }
 
     joinSession(ws: ws, clientID: string, session: string) {
         if (this.sessions[session]) {
             this.sessions[session].members.push(clientID);
-            ws.send(JSON.stringify({ message: 'join session', session: 'session'}));
+            ws.send(JSON.stringify({ message: 'join session', session: session}));
         } else {
             this.handleError(ws, clientID, 'Session does not exist')
         }
     }
 
-    streamSong(ws: ws, clientID: string, session: string, filename: string) {
-        
+    streamSong(ws: ws, clientID: string, session: string, songID: string) {
     }
 
     handleError(ws: ws, clientID: string, e: string) {
