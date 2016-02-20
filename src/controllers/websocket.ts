@@ -47,7 +47,7 @@ export class WebSocketHandler {
        case 'join session':
            this.joinSession(ws, clientID, messageObj.session);
            break;
-       case 'stream Song':
+       case 'stream song':
            this.streamSong(ws, clientID, messageObj.session, messageObj.filename);
            break;
        default:
@@ -56,7 +56,8 @@ export class WebSocketHandler {
     }
 
     removeFromSession(clientID: string) {
-        var sessionID = this.connections[clientID].session;
+        var sessionID: string = this.connections[clientID].session;
+
         if (sessionID) {
             var sessionMembers = this.sessions[sessionID].members
             sessionMembers = _.pull(sessionMembers, clientID);
@@ -69,11 +70,14 @@ export class WebSocketHandler {
 
     newSession(ws: ws, clientID: string) {
         var session: string = shortid.generate();
+
         this.sessions[session] = {
             members: [clientID],
             song: '',
             currentChunk: 0
         };
+
+        this.connections[clientID].session = session;
         ws.send(JSON.stringify({ message: 'new session', session: session}));
     }
 
@@ -81,6 +85,7 @@ export class WebSocketHandler {
         if (this.sessions[session]) {
             this.sessions[session].members.push(clientID);
             ws.send(JSON.stringify({ message: 'join session', session: session}));
+            this.connections[clientID].session = session;
         } else {
             this.handleError(ws, clientID, 'Session does not exist')
         }
