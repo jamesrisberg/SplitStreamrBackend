@@ -4,9 +4,27 @@ import ws = require('ws');
 import shortid = require('shortid');
 import _ = require('lodash');
 
+interface IConnection {
+    ws: ws,
+    session: string
+}
+
+interface ISession {
+    members: string[],
+    song: string,
+    leader: string,
+    currentChunk: number
+}
+
+interface IMessage {
+    message: string,
+    session?: string,
+    songID?: string
+}
+
 export class WebSocketHandler {
-    private sessions;
-    private connections;
+    private sessions: { [key:string]: ISession };
+    private connections: { [key:string]: IConnection };
 
     constructor(private wss: ws.Server) {
         this.setupServer();
@@ -39,7 +57,7 @@ export class WebSocketHandler {
         });
     }
 
-    handleNewMessage(ws: ws, clientID: string, messageObj) {
+    handleNewMessage(ws: ws, clientID: string, messageObj: IMessage) {
        switch(messageObj.message) {
        case 'new session':
            this.newSession(ws, clientID);
@@ -48,7 +66,7 @@ export class WebSocketHandler {
            this.joinSession(ws, clientID, messageObj.session);
            break;
        case 'stream song':
-           this.streamSong(ws, clientID, messageObj.session, messageObj.filename);
+           this.streamSong(ws, clientID, messageObj.session, messageObj.songID);
            break;
        default:
            this.handleError(ws, clientID, 'Message not supported');
@@ -59,39 +77,71 @@ export class WebSocketHandler {
         var sessionID: string = this.connections[clientID].session;
 
         if (sessionID) {
-            var sessionMembers = this.sessions[sessionID].members
+            var session: ISession = this.sessions[sessionID];
+            var sessionMembers = session.members;
+
+            // Remove user from session's list of members
             sessionMembers = _.pull(sessionMembers, clientID);
+
             // Clean up stale sessions
             if (sessionMembers.length == 0) {
-                delete this.sessions[sessionID];
+                session = undefined;
+            } else if (session.leader == clientID) {
+                // Kick everyone from the channel
+                this.cleanupSessionMembers(sessionID);
+                session = undefined;
             }
         }
     }
 
-    newSession(ws: ws, clientID: string) {
-        var session: string = shortid.generate();
+    cleanupSessionMembers(sessionID: string) {
+        var sessionMembers = this.sessions[sessionID].members;
 
-        this.sessions[session] = {
+         _.forEach(sessionMembers, (memberClientID) => {
+             this.connections[memberClientID].ws.close();
+             this.connections[memberClientID] = undefined;
+         });
+    }
+
+    newSession(ws: ws, clientID: string) {
+        var existingSessionID: string = this.connections[clientID].session;
+        var sessionID: string = shortid.generate();
+
+        // Create a new session
+        this.sessions[sessionID] = {
             members: [clientID],
             song: '',
+            leader: clientID,
             currentChunk: 0
         };
 
-        this.connections[clientID].session = session;
-        ws.send(JSON.stringify({ message: 'new session', session: session}));
+        // Delete or leave already existing session
+        if (existingSessionID) {
+            var existingSession: ISession = this.sessions[existingSessionID];
+
+            _.pull(existingSession.members, clientID);
+            if (existingSession.leader == clientID) {
+                this.cleanupSessionMembers(existingSessionID);
+                existingSession = undefined;
+            }
+        }
+
+        this.connections[clientID].session = sessionID;
+        ws.send(JSON.stringify({ message: 'new session', session: sessionID}));
     }
 
-    joinSession(ws: ws, clientID: string, session: string) {
-        if (this.sessions[session]) {
-            this.sessions[session].members.push(clientID);
-            ws.send(JSON.stringify({ message: 'join session', session: session}));
-            this.connections[clientID].session = session;
+    joinSession(ws: ws, clientID: string, sessionID: string) {
+        if (this.sessions[sessionID]) {
+            this.sessions[sessionID].members.push(clientID);
+            this.connections[clientID].session = sessionID;
+            ws.send(JSON.stringify({ message: 'join session', session: sessionID}));
         } else {
             this.handleError(ws, clientID, 'Session does not exist')
         }
     }
 
-    streamSong(ws: ws, clientID: string, session: string, songID: string) {
+    streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {
+        
     }
 
     handleError(ws: ws, clientID: string, e: string) {
