@@ -34,6 +34,8 @@ export class WebSocketHandler {
         this.wss.on('connection', ws => {
             var clientID = shortid.generate();
 
+            console.log('New connection. Assigned ID:', clientID);
+
             this.connections[clientID] = {
                 ws: ws,
                 session: undefined
@@ -50,6 +52,7 @@ export class WebSocketHandler {
             });
 
             ws.on('close', () => {
+                console.log(clientID, 'left.');
                 // Cleanup sessions and connections
                 this.removeFromSession(clientID);
                 delete this.connections[clientID];
@@ -58,6 +61,8 @@ export class WebSocketHandler {
     }
 
     handleNewMessage(ws: ws, clientID: string, messageObj: IMessage) {
+        console.log(clientID, 'sent a message:', messageObj.message, '.');
+
        switch(messageObj.message) {
        case 'new session':
            this.newSession(ws, clientID);
@@ -70,6 +75,8 @@ export class WebSocketHandler {
            break;
        default:
            this.handleError(ws, clientID, 'Message not supported');
+
+           console.log(clientID, 'message "', messageObj.message, '" is unsupported.');
        }
     }
 
