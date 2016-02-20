@@ -208,11 +208,11 @@ class WebSocketHandler {
 
     sendChunk(ws: ws, clientID: string, sessionID: string) {
         var session = this.sessions[sessionID];
-        session.readStream.on('readable', () => {
+        // session.readStream.on('readable', () => {
             if (session.currentChunk < session.song.numberOfChunks) {
                 this.sendSingleChunk(ws, session);
             }
-        });
+        // });
     }
 
     sendSingleChunk(ws: ws, session: ISession)  {
