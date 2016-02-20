@@ -6,6 +6,7 @@ import mongoose = require('mongoose');
 import http = require('http');
 import songRoutes = require('./routes/songs');
 import WebSocketHandler = require('./controllers/websocket');
+import songController = require('./controllers/song');
 
 var WebSocketServer = ws.Server;
 var app = express();
@@ -20,5 +21,7 @@ app.route('/songs')
 
 app.route('/songs/:songID')
     .get(songRoutes.songByID);
+
+songController.populateSongs();
 
 server.listen(8080);

@@ -6,7 +6,7 @@ import Song = require('../models/song');
 export function getSongs(req: express.Request, res: express.Response) {
     Song
         .find({})
-        .exec(function(err, songs) {
+        .exec((err, songs) => {
             if (err) {
                 res.status(400);
                 res.jsonp(err);
@@ -17,9 +17,11 @@ export function getSongs(req: express.Request, res: express.Response) {
 }
 
 export function songByID(req: express.Request, res: express.Response) {
+    let songID: string = req.params.songID;
+
     Song
-        .findOne({})
-        .exec(function(err, song) {
+        .findOne({_id: songID})
+        .exec((err, song) => {
             if (err) {
                 res.status(400);
                 res.jsonp(err);
