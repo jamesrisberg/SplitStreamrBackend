@@ -28,6 +28,8 @@ class WebSocketHandler {
 
     constructor(private wss: ws.Server) {
         this.setupServer();
+        this.sessions = {};
+        this.connections = {};
     };
 
     setupServer() {
