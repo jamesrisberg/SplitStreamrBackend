@@ -1,8 +1,12 @@
 /// <reference path="../../typings/main.d.ts"/>
 
 import ws = require('ws');
+import fs = require('fs');
+import q = require('q');
 import shortid = require('shortid');
 import _ = require('lodash');
+import Song = require('../models/song');
+import ISong = require('../interfaces/song');
 
 interface IConnection {
     ws: ws,
@@ -11,9 +15,10 @@ interface IConnection {
 
 interface ISession {
     members: string[],
-    song: string,
+    song: ISong,
     leader: string,
-    currentChunk: number
+    currentChunk: number,
+    readStream: fs.ReadStream
 }
 
 interface IMessage {
@@ -65,21 +70,24 @@ class WebSocketHandler {
     handleNewMessage(ws: ws, clientID: string, messageObj: IMessage) {
         console.log(clientID, 'sent a message:', messageObj.message + '.');
 
-       switch(messageObj.message) {
-       case 'new session':
-           this.newSession(ws, clientID);
-           break;
-       case 'join session':
-           this.joinSession(ws, clientID, messageObj.session);
-           break;
-       case 'stream song':
-           this.streamSong(ws, clientID, messageObj.session, messageObj.songID);
-           break;
-       default:
-           this.handleError(ws, clientID, 'Message not supported');
+        switch(messageObj.message) {
+        case 'new session':
+            this.newSession(ws, clientID);
+            break;
+        case 'join session':
+            this.joinSession(ws, clientID, messageObj.session);
+            break;
+        case 'stream song':
+            this.streamSong(ws, clientID, messageObj.session, messageObj.songID);
+            break;
+        case 'chunk received':
+            this.sendChunk(ws, clientID, messageObj.session);
+            break;
+        default:
+            this.handleError(ws, clientID, 'Message not supported');
 
-           console.log(clientID, 'message "' + messageObj.message + '" is unsupported.');
-       }
+            console.log(clientID, 'message "' + messageObj.message + '" is unsupported.');
+        }
     }
 
     removeFromSession(clientID: string) {
@@ -106,10 +114,10 @@ class WebSocketHandler {
     cleanupSessionMembers(sessionID: string) {
         var sessionMembers = this.sessions[sessionID].members;
 
-         _.forEach(sessionMembers, (memberClientID) => {
-             this.connections[memberClientID].ws.close();
-             this.connections[memberClientID] = undefined;
-         });
+        _.forEach(sessionMembers, (memberClientID) => {
+            this.connections[memberClientID].ws.close();
+            this.connections[memberClientID] = undefined;
+        });
     }
 
     newSession(ws: ws, clientID: string) {
@@ -127,9 +135,10 @@ class WebSocketHandler {
             // Create a new session
             this.sessions[sessionID] = {
                 members: [clientID],
-                song: '',
+                song: undefined,
                 leader: clientID,
-                currentChunk: 0
+                currentChunk: 0,
+                readStream: undefined
             };
 
             this.connections[clientID].session = sessionID;
@@ -168,7 +177,54 @@ class WebSocketHandler {
         }
     }
 
-    streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {}
+    streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {
+        Song
+            .findOne({_id: songID})
+            .exec((err, song) => {
+                if (err)
+                    this.handleError(ws, clientID, err);
+                else if (!song)
+                    this.handleError(ws, clientID, 'Song does not exist or wrong ID.')
+                else {
+                    this.sendInitialChunks(ws, clientID, sessionID, song);
+                }
+            })
+    }
+
+    sendInitialChunks(ws: ws, clientID: string , sessionID: string, song: ISong) {
+        var session = this.sessions[sessionID];
+        session.song = song;
+        session.currentChunk = 0;
+        session.readStream = fs.createReadStream(song.path);
+        session.readStream.on('readable', () => {
+            session.members.forEach((member) => {
+                if (session.currentChunk < session.song.numberOfChunks) {
+                    var memberSocket = this.connections[member].ws;
+                    this.sendSingleChunk(memberSocket, session);
+                }
+            });
+        })
+    }
+
+    sendChunk(ws: ws, clientID: string, sessionID: string) {
+        var session = this.sessions[sessionID];
+        session.readStream.on('readable', () => {
+            if (session.currentChunk < session.song.numberOfChunks) {
+                this.sendSingleChunk(ws, session);
+            }
+        });
+    }
+
+    sendSingleChunk(ws: ws, session: ISession)  {
+        console.log('Sending chunk #', session.currentChunk + '.');
+
+        ws.send(JSON.stringify({
+            message: 'chunk number',
+            chunk: session.currentChunk++,
+            song: session.song._id
+        }));
+        ws.send(session.readStream.read(session.song.fixedChunkSize));
+    }
 
     handleError(ws: ws, clientID: string, e: string) {
         // Send response
