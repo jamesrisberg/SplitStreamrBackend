@@ -10,7 +10,7 @@ var readdir = q.nfbind(fs.readdir);
 
 export function getMusicFileMetadata(filename: string) {
     var defer = q.defer();
-    var chunkSize = 6400;
+    var chunkSize = 128000;
 
     mm(fs.createReadStream(filename),
        { duration: true },
