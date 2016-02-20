@@ -116,52 +116,62 @@ class WebSocketHandler {
         console.log(clientID, 'requested a new session.');
 
         var existingSessionID: string = this.connections[clientID].session;
-        var sessionID: string = shortid.generate();
 
-        // Create a new session
-        this.sessions[sessionID] = {
-            members: [clientID],
-            song: '',
-            leader: clientID,
-            currentChunk: 0
-        };
-
-        // Delete or leave already existing session
         if (existingSessionID) {
-            var existingSession: ISession = this.sessions[existingSessionID];
+            this.handleError(ws, clientID, 'Client already part of a session');
 
-            _.pull(existingSession.members, clientID);
-            if (existingSession.leader == clientID) {
-                this.cleanupSessionMembers(existingSessionID);
-                existingSession = undefined;
-            }
+            console.log(clientID, 'failed to create a new session.');
+        } else {
+            var sessionID: string = shortid.generate();
+
+            // Create a new session
+            this.sessions[sessionID] = {
+                members: [clientID],
+                song: '',
+                leader: clientID,
+                currentChunk: 0
+            };
+
+            this.connections[clientID].session = sessionID;
+
+            // Send response
+            ws.send(JSON.stringify({ message: 'new session', session: sessionID}));
+
+            console.log(clientID, 'created a new session:', sessionID + '.');
         }
-
-        this.connections[clientID].session = sessionID;
-        ws.send(JSON.stringify({ message: 'new session', session: sessionID}));
-
-        console.log(clientID, 'created a new session:', sessionID, '.');
     }
 
     joinSession(ws: ws, clientID: string, sessionID: string) {
-        console.log(clientID, 'requested to join session:', sessionID, '.');
+        console.log(clientID, 'requested to join session:', sessionID + '.');
 
         if (this.sessions[sessionID]) {
-            this.sessions[sessionID].members.push(clientID);
-            this.connections[clientID].session = sessionID;
-            ws.send(JSON.stringify({ message: 'join session', session: sessionID}));
+            // If the user does not already have a session, then join
+            if (!this.connections[clientID].session) {
+                var sessionMembers = this.sessions[sessionID].members;
+                sessionMembers.push(clientID);
 
-            console.log(clientID, 'joined session:', sessionID, '.');
+                this.connections[clientID].session = sessionID;
+
+                // Send response
+                ws.send(JSON.stringify({ message: 'join session', session: sessionID}));
+
+                console.log(clientID, 'joined session:', sessionID, '.');
+            } else {
+                this.handleError(ws, clientID, 'Client already part of a session');
+
+                console.log(clientID, 'failed to join session:', sessionID + '. Already part of session.');
+            }
         } else {
             this.handleError(ws, clientID, 'Session does not exist');
 
-            console.log(clientID, 'failed to join session:', sessionID, '.');
+            console.log(clientID, 'failed to join session:', sessionID + '. Does not exist.');
         }
     }
 
     streamSong(ws: ws, clientID: string, sessionID: string, songID: string) {}
 
     handleError(ws: ws, clientID: string, e: string) {
+        // Send response
         ws.send(JSON.stringify({message: 'error', error: e}));
     }
 }
