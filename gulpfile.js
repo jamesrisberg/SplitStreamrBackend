@@ -10,7 +10,7 @@ var tsProject = ts.createProject({
     sourceMap: true
 });
 
-gulp.task('typescript server', ['prettify'], function() {
+gulp.task('typescript', function() {
     var result = gulp.src('src/**/*.ts')
             .pipe(sourcemaps.init())
             .pipe(ts(tsProject));
@@ -31,7 +31,7 @@ gulp.task('start' ,['build'], function() {
 });
 
 gulp.task('watch', function() {
-    gulp.watch('src/app/**/*.ts', ['typescript server']);
+    gulp.watch('src/**/*.ts', ['typescript']);
 });
 
 gulp.task('build', ['typescript']);
