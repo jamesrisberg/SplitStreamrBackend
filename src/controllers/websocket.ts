@@ -193,26 +193,32 @@ class WebSocketHandler {
 
     sendInitialChunks(ws: ws, clientID: string , sessionID: string, song: ISong) {
         var session = this.sessions[sessionID];
-        session.song = song;
-        session.currentChunk = 0;
-        session.readStream = fs.createReadStream(song.path);
-        session.readStream.on('readable', () => {
-            session.members.forEach((member) => {
-                if (session.currentChunk < session.song.numberOfChunks) {
-                    var memberSocket = this.connections[member].ws;
-                    this.sendSingleChunk(memberSocket, session);
-                }
-            });
-        })
+        if (session) {
+            session.song = song;
+            session.currentChunk = 0;
+            session.readStream = fs.createReadStream(song.path);
+            session.readStream.on('readable', () => {
+                session.members.forEach((member) => {
+                    if (session.currentChunk < session.song.numberOfChunks) {
+                        var memberSocket = this.connections[member].ws;
+                        this.sendSingleChunk(memberSocket, session);
+                    }
+                });
+            })
+        } else {
+            this.handleError(ws, clientID, 'Session does not exist');
+        }
     }
 
     sendChunk(ws: ws, clientID: string, sessionID: string) {
         var session = this.sessions[sessionID];
-        // session.readStream.on('readable', () => {
+        if (session) {
             if (session.currentChunk < session.song.numberOfChunks) {
                 this.sendSingleChunk(ws, session);
             }
-        // });
+        } else {
+            this.handleError(ws, clientID, 'Session does not exist');
+        }
     }
 
     sendSingleChunk(ws: ws, session: ISession)  {
