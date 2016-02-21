@@ -32,4 +32,4 @@ app.use(express.static(publicDir));
 
 songController.populateSongs();
 
-server.listen(8080);
+server.listen(80);
