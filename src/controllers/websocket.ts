@@ -252,7 +252,7 @@ class WebSocketHandler {
         this.sendBinaryMessage(ws, session.data.slice(start, end));
 
         // Clean up session data
-        if (endSize == session.song.fileSize) {
+        if (session.currentChunk == session.song.numberOfChunks) {
             session.data = undefined;
             session.members.forEach((member) => {
                 var memberSocket = this.connections[member].ws;
