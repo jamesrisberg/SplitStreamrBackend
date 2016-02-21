@@ -18,7 +18,6 @@ interface ISession {
     song: ISong,
     leader: string,
     currentChunk: number,
-    readStream: fs.ReadStream,
     data: Buffer
 }
 
@@ -155,7 +154,6 @@ class WebSocketHandler {
                 song: undefined,
                 leader: clientID,
                 currentChunk: 0,
-                readStream: undefined,
                 data: undefined
             };
 
@@ -214,16 +212,13 @@ class WebSocketHandler {
         if (session) {
             session.song = song;
             session.currentChunk = 0;
-            session.readStream = fs.createReadStream(song.path);
-            session.readStream.on('readable', () => {
-                session.data = session.readStream.read();
-                session.members.forEach((member) => {
-                    if (session.currentChunk < session.song.numberOfChunks) {
-                        var memberSocket = this.connections[member].ws;
-                        this.sendSingleChunk(memberSocket, session);
-                    }
-                });
-            })
+            session.data = fs.readFileSync(session.song.path);
+            session.members.forEach((member) => {
+                if (session.currentChunk < session.song.numberOfChunks) {
+                    var memberSocket = this.connections[member].ws;
+                    this.sendSingleChunk(memberSocket, session);
+                }
+            });
         } else {
             this.handleError(ws, clientID, 'Session does not exist');
         }
@@ -258,7 +253,6 @@ class WebSocketHandler {
         // Clean up session data
         if (endSize == session.song.fileSize) {
             session.data = undefined;
-            session.readStream = undefined;
         }
     }
 
