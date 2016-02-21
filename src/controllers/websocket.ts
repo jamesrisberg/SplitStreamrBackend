@@ -96,8 +96,12 @@ class WebSocketHandler {
     }
 
     sendBinaryMessage(ws: ws, data) {
-        console.log('BINARY MESSAGE DATA:', data.toString('base64'))
-        ws.send(data, {binary: true, mask: false});
+        if (data) {
+            console.log('BINARY MESSAGE DATA:', data.toString('base64'))
+            ws.send(data, {binary: true, mask: false});
+        } else {
+            console.log('NO DATA');
+        }
     }
 
     removeFromSession(clientID: string) {
