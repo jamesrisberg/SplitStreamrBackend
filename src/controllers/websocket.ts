@@ -91,22 +91,24 @@ class WebSocketHandler {
     }
 
     removeFromSession(clientID: string) {
-        var sessionID: string = this.connections[clientID].session;
+        if (this.connections[clientID]) {
+            var sessionID: string = this.connections[clientID].session;
 
-        if (sessionID) {
-            var session: ISession = this.sessions[sessionID];
-            var sessionMembers = session.members;
+            if (sessionID) {
+                var session: ISession = this.sessions[sessionID];
+                var sessionMembers = session.members;
 
-            // Remove user from session's list of members
-            sessionMembers = _.pull(sessionMembers, clientID);
+                // Remove user from session's list of members
+                sessionMembers = _.pull(sessionMembers, clientID);
 
-            // Clean up stale sessions
-            if (sessionMembers.length == 0) {
-                session = undefined;
-            } else if (session.leader == clientID) {
-                // Kick everyone from the channel
-                this.cleanupSessionMembers(sessionID);
-                session = undefined;
+                // Clean up stale sessions
+                if (sessionMembers.length == 0) {
+                    session = undefined;
+                } else if (session.leader == clientID) {
+                    // Kick everyone from the channel
+                    this.cleanupSessionMembers(sessionID);
+                    session = undefined;
+                }
             }
         }
     }
