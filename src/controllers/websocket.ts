@@ -60,9 +60,10 @@ class WebSocketHandler {
 
             ws.on('close', () => {
                 console.log(clientID, 'left.');
+
                 // Cleanup sessions and connections
                 this.removeFromSession(clientID);
-                delete this.connections[clientID];
+                this.connections[clientID] = undefined;
             });
         });
     }
@@ -180,7 +181,7 @@ class WebSocketHandler {
                 // Send response
                 this.sendTextMessage(ws, { message: 'join session', session: sessionID});
 
-                console.log(clientID, 'joined session:', sessionID, '.');
+                console.log(clientID, 'joined session:', sessionID + '.');
             } else {
                 this.handleError(ws, clientID, 'Client already part of a session');
 
@@ -253,6 +254,10 @@ class WebSocketHandler {
         // Clean up session data
         if (endSize == session.song.fileSize) {
             session.data = undefined;
+            session.members.forEach((member) => {
+                var memberSocket = this.connections[member].ws;
+                this.sendTextMessage(memberSocket, { message: 'song finished', song: session.song._id });
+            });
         }
     }
 
