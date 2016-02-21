@@ -254,6 +254,12 @@ class WebSocketHandler {
         });
 
         this.sendBinaryMessage(ws, session.data.slice(start, end));
+
+        // Clean up session data
+        if (endSize == session.song.fileSize) {
+            session.data = undefined;
+            session.readStream = undefined;
+        }
     }
 
     handleError(ws: ws, clientID: string, e: string) {

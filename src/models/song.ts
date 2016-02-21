@@ -10,9 +10,9 @@ var SongSchema = new Schema({
     length: Number, // Length in Seconds
     numberOfChunks: Number, // Total number of chunks to split file into
     fixedChunkSize: Number, // Size in bytes
-    fileType: String, // File extension, eg 'mp3'
-    fileSize: Number,
-    path: String
+    fileType: String, // File extension, eg. 'mp3'
+    fileSize: Number, // Filesize
+    path: String // Path to file
 });
 
 export = mongoose.model<ISong>('Song', SongSchema);
