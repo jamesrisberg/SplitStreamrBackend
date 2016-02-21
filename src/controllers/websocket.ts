@@ -214,7 +214,7 @@ class WebSocketHandler {
             session.currentChunk = 0;
             session.readStream = fs.createReadStream(song.path);
             session.readStream.on('readable', () => {
-                session.readStream.read(0);
+                session.readStream.read(1);
                 session.members.forEach((member) => {
                     if (session.currentChunk < session.song.numberOfChunks) {
                         var memberSocket = this.connections[member].ws;
