@@ -17,13 +17,15 @@ export function getMusicFileMetadata(filename: string) {
        (err, metadata) => {
            if (err) defer.reject(err);
            else {
+               var fileSize = fs.statSync(filename).size;
                var song: ISong = new Song({
                    name: metadata.title,
                    artist: metadata.artist[0],
                    length: metadata.duration,
-                   numberOfChunks: Math.ceil(fs.statSync(filename).size / chunkSize),
+                   numberOfChunks: Math.ceil(fileSize / chunkSize),
                    fixedChunkSize: chunkSize,
                    fileType: filename.split('.')[1],
+                   fileSize: fileSize,
                    path: filename
                });
 

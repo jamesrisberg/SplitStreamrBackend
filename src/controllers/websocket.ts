@@ -18,7 +18,8 @@ interface ISession {
     song: ISong,
     leader: string,
     currentChunk: number,
-    readStream: fs.ReadStream
+    readStream: fs.ReadStream,
+    data: Buffer
 }
 
 interface IMessage {
@@ -154,7 +155,8 @@ class WebSocketHandler {
                 song: undefined,
                 leader: clientID,
                 currentChunk: 0,
-                readStream: undefined
+                readStream: undefined,
+                data: undefined
             };
 
             this.connections[clientID].session = sessionID;
@@ -214,7 +216,7 @@ class WebSocketHandler {
             session.currentChunk = 0;
             session.readStream = fs.createReadStream(song.path);
             session.readStream.on('readable', () => {
-                session.readStream.read(session.song.fixedChunkSize);
+                session.data = session.readStream.read();
                 session.members.forEach((member) => {
                     if (session.currentChunk < session.song.numberOfChunks) {
                         var memberSocket = this.connections[member].ws;
@@ -241,12 +243,17 @@ class WebSocketHandler {
     sendSingleChunk(ws: ws, session: ISession)  {
         console.log('Sending chunk #', session.currentChunk + '.');
 
+        var start = session.currentChunk * session.song.fixedChunkSize;
+        var endSize = (session.currentChunk + 1) * session.song.fixedChunkSize;
+        var end = (endSize > session.song.fileSize) ? session.song.fileSize : endSize;
+
         this.sendTextMessage(ws, {
             message: 'chunk number',
             chunk: session.currentChunk++,
             song: session.song._id
         });
-        this.sendBinaryMessage(ws, session.readStream.read(session.song.fixedChunkSize));
+
+        this.sendBinaryMessage(ws, session.data.slice(start, end));
     }
 
     handleError(ws: ws, clientID: string, e: string) {

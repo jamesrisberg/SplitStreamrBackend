@@ -8,7 +8,8 @@ interface ISong extends mongoose.Document {
     length: number; // Length in Seconds
     numberOfChunks: number; // Total number of chunks to split file into
     fixedChunkSize: number; // Size in bytes
-    fileType: string; // File extension, eg 'mp3',
+    fileType: string; // File extension, eg 'mp3'
+    fileSize: number;
     path: string;
 }
 
