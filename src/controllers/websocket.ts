@@ -90,6 +90,16 @@ class WebSocketHandler {
         }
     }
 
+    sendTextMessage(ws: ws, data) {
+        console.log('MESSAGE DATA:', data);
+        ws.send(JSON.stringify(data));
+    }
+
+    sendBinaryMessage(ws: ws, data) {
+        console.log('BINARY MESSAGE DATA:', data.toString('base64'))
+        ws.send(data, {binary: true, mask: false});
+    }
+
     removeFromSession(clientID: string) {
         if (this.connections[clientID]) {
             var sessionID: string = this.connections[clientID].session;
@@ -146,7 +156,7 @@ class WebSocketHandler {
             this.connections[clientID].session = sessionID;
 
             // Send response
-            ws.send(JSON.stringify({ message: 'new session', session: sessionID}));
+            this.sendTextMessage(ws, { message: 'new session', session: sessionID });
 
             console.log(clientID, 'created a new session:', sessionID + '.');
         }
@@ -164,7 +174,7 @@ class WebSocketHandler {
                 this.connections[clientID].session = sessionID;
 
                 // Send response
-                ws.send(JSON.stringify({ message: 'join session', session: sessionID}));
+                this.sendTextMessage(ws, { message: 'join session', session: sessionID});
 
                 console.log(clientID, 'joined session:', sessionID, '.');
             } else {
@@ -226,17 +236,17 @@ class WebSocketHandler {
     sendSingleChunk(ws: ws, session: ISession)  {
         console.log('Sending chunk #', session.currentChunk + '.');
 
-        ws.send(JSON.stringify({
+        this.sendTextMessage(ws, {
             message: 'chunk number',
             chunk: session.currentChunk++,
             song: session.song._id
-        }));
-        ws.send(session.readStream.read(session.song.fixedChunkSize));
+        });
+        this.sendBinaryMessage(ws, session.readStream.read(session.song.fixedChunkSize));
     }
 
     handleError(ws: ws, clientID: string, e: string) {
         // Send response
-        ws.send(JSON.stringify({message: 'error', error: e}));
+        this.sendTextMessage(ws, { message: 'error', error: e });
     }
 }
 
