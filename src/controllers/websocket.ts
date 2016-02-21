@@ -97,7 +97,7 @@ class WebSocketHandler {
 
     sendBinaryMessage(ws: ws, data) {
         if (data) {
-            console.log('BINARY MESSAGE DATA:', data.toString('base64'))
+            console.log('BINARY MESSAGE DATA:', data.toString('base64').substring(0,32) + '...')
             ws.send(data, {binary: true, mask: false});
         } else {
             console.log('NO DATA');
