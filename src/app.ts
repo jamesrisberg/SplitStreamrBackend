@@ -6,6 +6,7 @@ import mongoose = require('mongoose');
 import http = require('http');
 import path = require('path');
 import songRoutes = require('./routes/songs');
+import userRoutes = require('./routes/users');
 import WebSocketHandler = require('./controllers/websocket');
 import songController = require('./controllers/song');
 
@@ -23,6 +24,9 @@ app.route('/songs')
 
 app.route('/songs/:songID')
     .get(songRoutes.songByID);
+    
+app.route('/user/signin')
+    .post(songRoutes.signIn);
 
 app.get("/", (req, res) => {
     res.sendFile(path.resolve('index.html'));
