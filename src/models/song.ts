@@ -2,7 +2,7 @@
 
 import mongoose = require('mongoose');
 import ISong = require('../interfaces/song');
-var Schema = mongoose.Schema;
+let Schema = mongoose.Schema;
 
 var SongSchema = new Schema({
     name: String, // Name of song
@@ -12,7 +12,11 @@ var SongSchema = new Schema({
     fixedChunkSize: Number, // Size in bytes
     fileType: String, // File extension, eg. 'mp3'
     fileSize: Number, // Filesize
-    path: String // Path to file
+    path: String, // Path to file
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
 });
 
 export = mongoose.model<ISong>('Song', SongSchema);

@@ -1,11 +1,9 @@
 /// <reference path="../../typings/main.d.ts"/>
 
 import mongoose = require('mongoose');
-import validator = require('validator');
 import crypto = require('crypto');
 import IUser = require('../interfaces/user');
 var Schema = mongoose.Schema;
-var uniqueValidator = require('mongoose-unique-validator');
 
 /**
  * A Validation function for local strategy properties
@@ -18,7 +16,7 @@ function validateLocalStrategyProperty(property) {
  * A Validation function for local strategy email
  */
 function validateLocalStrategyEmail(email) {
-    return ((this.provider !== 'local' && !this.updated) || validator.isEmail(email));
+    return true;
 };
 
 /**
@@ -45,32 +43,12 @@ var UserSchema = new Schema({
         'default': '',
         'validate': [validateLocalStrategyEmail, 'Not a valid email address']
     },
-    course: {
-        'type': String,
-        'trim': true,
-        'default': ''
-    },
-    roles: {
-        'type': [{
-            'type': String,
-            'enum': ['student', 'entranceProctor', 'examProctor', 'admin']
-        }],
-        'default': ['student']
-    },
     password: {
         'type': String,
         'default': ''
     },
     salt: {
         'type': String
-    },
-    provider: {
-        'type': String,
-        'required': 'Provider is required'
-    },
-    online: {
-        'type': Boolean,
-        'default': false
     }
 });
 
@@ -105,7 +83,5 @@ UserSchema.method('hashPassword', function(password: string) {
 UserSchema.method('authenticate', function(password: string) {
     return this.password === this.hashPassword(password);
 });
-
-UserSchema.plugin(uniqueValidator);
 
 export = mongoose.model<IUser>('User', UserSchema);

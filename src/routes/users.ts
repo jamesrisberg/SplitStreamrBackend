@@ -4,9 +4,10 @@ import express = require('express');
 import User = require('../models/user');
 
 export function signIn(req: express.Request, res: express.Response) {
+  let formattedEmail = req.body.email.toLowerCase();
   User
     .findOne({
-      username: req.body.username
+      email: formattedEmail
     }, (err, user) => {
       if (err) {
         return res.send(err);
@@ -22,4 +23,19 @@ export function signIn(req: express.Request, res: express.Response) {
 
       res.send(user);
     });
+}
+
+export function signUp(req: express.Request, res: express.Response) {
+  var user = new User(req.body);
+
+  user.save(function(err) {
+      if (err) {
+          return res.send(err);
+      }
+
+      user.password = undefined;
+      user.salt = undefined;
+
+      res.send(user);
+  });
 }
