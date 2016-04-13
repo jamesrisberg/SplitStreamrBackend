@@ -6,6 +6,7 @@ import mongoose = require('mongoose');
 import session = require('express-session');
 import http = require('http');
 import path = require('path');
+import morgan = require('morgan');
 import songRoutes = require('./routes/songs');
 import userRoutes = require('./routes/users');
 import WebSocketHandler = require('./controllers/websocket');
@@ -41,6 +42,10 @@ app.use(session({
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Pretty logs
+app.use(morgan('dev'));
+
 
 app.route('/songs/user/:userID').get(songRoutes.getSongs);
 app.route('/songs/id/:songID').get(songRoutes.songByID);
