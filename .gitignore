@@ -32,6 +32,12 @@ node_modules
 # Optional REPL history
 .node_repl_history
 
+# Build output
+app/
+
+# TypeScript
+typings/
+
 # Emacs garbage
 .DS_Store
 .tern-port

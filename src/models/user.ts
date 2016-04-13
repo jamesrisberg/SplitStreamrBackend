@@ -1,30 +1,30 @@
-/// <reference path="../../typings/main.d.ts"/>
+/// <reference path="../../typings/main.d.ts" />
 
 import mongoose = require('mongoose');
 import validator = require('validator');
 import crypto = require('crypto');
 import IUser = require('../interfaces/user');
-var Schema = mongoose.Schema;
-var uniqueValidator = require('mongoose-unique-validator');
+let Schema = mongoose.Schema;
+let uniqueValidator = require('mongoose-unique-validator');
 
 /**
  * A Validation function for local strategy properties
  */
-function validateLocalStrategyProperty(property) {
+function validateLocalStrategyProperty(property: string) {
     return ((this.provider !== 'local' && !this.updated) || property.length);
 };
 
 /**
  * A Validation function for local strategy email
  */
-function validateLocalStrategyEmail(email) {
+function validateLocalStrategyEmail(email: string) {
     return ((this.provider !== 'local' && !this.updated) || validator.isEmail(email));
 };
 
 /**
  * User schema for proctors and students.
  */
-var UserSchema = new Schema({
+let UserSchema = new Schema({
     firstName: {
         'type': String,
         'trim': true,
@@ -77,7 +77,7 @@ var UserSchema = new Schema({
 /**
  * Hook a pre save method to hash the password
  */
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function(next: Function) {
     if (this.password && this.isModified('password')) {
         this.salt = crypto.randomBytes(16).toString('base64');
         this.password = this.hashPassword(this.password);
