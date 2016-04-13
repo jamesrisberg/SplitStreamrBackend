@@ -43,6 +43,17 @@ var UserSchema = new Schema({
         'default': '',
         'validate': [validateLocalStrategyEmail, 'Not a valid email address']
     },
+    roles: {
+        'type': [{
+            'type': String,
+            'enum': ['user', 'admin']
+        }],
+        'default': ['user']
+    },
+    provider: {
+        'type': String,
+        'required': 'Provider is required'
+    },
     password: {
         'type': String,
         'default': ''

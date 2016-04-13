@@ -8,6 +8,8 @@ interface IUser extends mongoose.Document {
     email: string;
     password: string;
     salt: string;
+    roles: string[];
+    provider: string;
     authenticate: Function,
     hashPassword: Function
 }
