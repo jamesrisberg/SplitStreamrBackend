@@ -3,10 +3,13 @@
 import ws = require('ws');
 import fs = require('fs');
 import q = require('q');
+import crypto = require('crypto');
 import shortid = require('shortid');
 import _ = require('lodash');
 import Song = require('../models/song');
 import ISong = require('../interfaces/song');
+
+const algorithm = 'aes-256-ctr';
 
 interface IConnection {
     ws: ws,
@@ -18,6 +21,7 @@ interface ISession {
     song: ISong,
     leader: string,
     currentChunk: number,
+    key: string,
     data: Buffer
 }
 
@@ -39,7 +43,7 @@ class WebSocketHandler {
 
     setupServer() {
         this.wss.on('connection', ws => {
-            var clientID = shortid.generate();
+            let clientID = shortid.generate();
 
             console.log('New connection. Assigned ID:', clientID);
 
@@ -51,7 +55,7 @@ class WebSocketHandler {
             ws.on('message', (data: string) => {
                 try {
                     // Parse and handle incoming message.
-                    var messageObj = JSON.parse(data);
+                    let messageObj = JSON.parse(data);
                     this.handleNewMessage(ws, clientID, messageObj);
                 } catch (ex) {
                     this.handleError(ws, clientID, ex);
@@ -107,11 +111,11 @@ class WebSocketHandler {
 
     removeFromSession(clientID: string) {
         if (this.connections[clientID]) {
-            var sessionID: string = this.connections[clientID].session;
+            let sessionID: string = this.connections[clientID].session;
 
             if (sessionID) {
-                var session: ISession = this.sessions[sessionID];
-                var sessionMembers = session.members;
+                let session: ISession = this.sessions[sessionID];
+                let sessionMembers = session.members;
 
                 // Remove user from session's list of members
                 sessionMembers = _.pull(sessionMembers, clientID);
@@ -129,7 +133,7 @@ class WebSocketHandler {
     }
 
     cleanupSessionMembers(sessionID: string) {
-        var sessionMembers = this.sessions[sessionID].members;
+        let sessionMembers = this.sessions[sessionID].members;
 
         _.forEach(sessionMembers, (memberClientID) => {
             this.connections[memberClientID].ws.close();
@@ -140,18 +144,20 @@ class WebSocketHandler {
     newSession(ws: ws, clientID: string) {
         console.log(clientID, 'requested a new session.');
 
-        var existingSessionID: string = this.connections[clientID].session;
+        let existingSessionID: string = this.connections[clientID].session;
 
         if (existingSessionID) {
             this.handleError(ws, clientID, 'Client already part of a session');
 
             console.log(clientID, 'failed to create a new session.');
         } else {
-            var sessionID: string = shortid.generate();
+            let sessionID: string = shortid.generate();
+            let key: string = crypto.randomBytes(16).toString('base64');
 
             // Create a new session
             this.sessions[sessionID] = {
                 members: [clientID],
+                key: key,
                 song: undefined,
                 leader: clientID,
                 currentChunk: 0,
@@ -161,7 +167,7 @@ class WebSocketHandler {
             this.connections[clientID].session = sessionID;
 
             // Send response
-            this.sendTextMessage(ws, { message: 'new session', session: sessionID });
+            this.sendTextMessage(ws, { message: 'new session', session: sessionID, key: key });
 
             console.log(clientID, 'created a new session:', sessionID + '.');
         }
@@ -173,7 +179,7 @@ class WebSocketHandler {
         if (this.sessions[sessionID]) {
             // If the user does not already have a session, then join
             if (!this.connections[clientID].session) {
-                var sessionMembers = this.sessions[sessionID].members;
+                let sessionMembers = this.sessions[sessionID].members;
                 sessionMembers.push(clientID);
 
                 this.connections[clientID].session = sessionID;
@@ -209,14 +215,14 @@ class WebSocketHandler {
     }
 
     sendInitialChunks(ws: ws, clientID: string , sessionID: string, song: ISong) {
-        var session = this.sessions[sessionID];
+        let session = this.sessions[sessionID];
         if (session) {
             session.song = song;
             session.currentChunk = 0;
             session.data = fs.readFileSync(session.song.path);
             session.members.forEach((member) => {
                 if (session.currentChunk < session.song.numberOfChunks) {
-                    var memberSocket = this.connections[member].ws;
+                    let memberSocket = this.connections[member].ws;
                     this.sendSingleChunk(memberSocket, session);
                 }
             });
@@ -226,7 +232,7 @@ class WebSocketHandler {
     }
 
     sendChunk(ws: ws, clientID: string, sessionID: string) {
-        var session = this.sessions[sessionID];
+        let session = this.sessions[sessionID];
         if (session) {
             if (session.currentChunk < session.song.numberOfChunks) {
                 this.sendSingleChunk(ws, session);
@@ -239,9 +245,9 @@ class WebSocketHandler {
     sendSingleChunk(ws: ws, session: ISession)  {
         console.log('Sending chunk #', session.currentChunk + '.');
 
-        var start = session.currentChunk * session.song.fixedChunkSize;
-        var endSize = (session.currentChunk + 1) * session.song.fixedChunkSize;
-        var end = (endSize > session.song.fileSize) ? session.song.fileSize : endSize;
+        let start = session.currentChunk * session.song.fixedChunkSize;
+        let endSize = (session.currentChunk + 1) * session.song.fixedChunkSize;
+        let end = (endSize > session.song.fileSize) ? session.song.fileSize : endSize;
 
         this.sendTextMessage(ws, {
             message: 'chunk number',
@@ -249,13 +255,16 @@ class WebSocketHandler {
             song: session.song._id
         });
 
-        this.sendBinaryMessage(ws, session.data.slice(start, end));
+        let cipher = crypto.createCipher(algorithm, session.key)
+        let crypted = Buffer.concat([cipher.update(session.data.slice(start, end)), cipher.final()]);
+
+        this.sendBinaryMessage(ws, crypted);
 
         // Clean up session data
         if (session.currentChunk == session.song.numberOfChunks) {
             session.data = undefined;
             session.members.forEach((member) => {
-                var memberSocket = this.connections[member].ws;
+                let memberSocket = this.connections[member].ws;
                 this.sendTextMessage(memberSocket, { message: 'song finished', song: session.song._id });
             });
         }
