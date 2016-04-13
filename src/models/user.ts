@@ -60,6 +60,9 @@ var UserSchema = new Schema({
     },
     salt: {
         'type': String
+    },
+    userId: {
+        'type': mongoose.Schema.Types.ObjectId
     }
 });
 
