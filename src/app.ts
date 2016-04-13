@@ -39,7 +39,6 @@ app.use(session({
     })
 }));
 
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -56,4 +55,4 @@ app.use(express.static(publicDir));
 
 songController.populateSongs();
 
-server.listen(80);
+server.listen(config.port);
