@@ -11,7 +11,7 @@ interface ISong extends mongoose.Document {
     fileType: string; // File extension, eg 'mp3'
     fileSize: number;
     path: string;
-    userId: typeof mongoose.Schema.Types.ObjectId;
+    user: typeof mongoose.Schema.Types.ObjectId;
 }
 
 export = ISong;

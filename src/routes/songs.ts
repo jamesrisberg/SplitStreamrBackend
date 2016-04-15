@@ -7,7 +7,7 @@ import User = require('../models/user');
 
 export function getSongs(req: express.Request, res: express.Response) {
     Song
-        .find({ userId: new mongoose.Types.ObjectId(req.params.userID) })
+        .find({ user: new mongoose.Types.ObjectId(req.params.userID) })
         .exec((err, songs) => {
             if (err) {
                 res.status(400);
