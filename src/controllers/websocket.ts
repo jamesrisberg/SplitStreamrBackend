@@ -1,5 +1,7 @@
 /// <reference path="../../typings/main.d.ts"/>
 
+'use strict'
+
 import ws = require('ws');
 import fs = require('fs');
 import q = require('q');
@@ -255,10 +257,12 @@ class WebSocketHandler {
             song: session.song._id
         });
 
-        let cipher = crypto.createCipher(algorithm, session.key)
-        let crypted = Buffer.concat([cipher.update(session.data.slice(start, end)), cipher.final()]);
+        // let cipher = crypto.createCipher(algorithm, session.key)
+        // let crypted = Buffer.concat([cipher.update(session.data.slice(start, end)), cipher.final()]);
 
-        this.sendBinaryMessage(ws, crypted);
+        // this.sendBinaryMessage(ws, crypted);
+
+        this.sendBinaryMessage(ws, session.data.slice(start, end));
 
         // Clean up session data
         if (session.currentChunk == session.song.numberOfChunks) {
